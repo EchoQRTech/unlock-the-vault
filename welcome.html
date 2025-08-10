@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ==========================================================
+       The Treasuretto Vault — Welcome / Post-Confirm Redirect
+       One-file, mobile-first, luxury UI. Drops into /public/welcome.html
+       Tech: Vanilla HTML/CSS/JS + Supabase JS (ESM) + your Vercel API routes
+       ========================================================== -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <title>Welcome to The Treasuretto Vault</title>
+
+  <!-- ===================== CONFIG (set these!) =====================
+       Replace the content values with your real Supabase project info.
+       You can also inject these via <Meta> tags in Next.js if preferred. -->
+  <meta name="supabase-url" content="'https://crlhfdjjopikjzpddish.supabase.co'">
+  <meta name="supabase-anon-key" content="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNybGhmZGpqb3Bpa2p6cGRkaXNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4NjA3NzgsImV4cCI6MjA3MDQzNjc3OH0.9kYUw7DV5ocA3D1Ss9OJhng1TnZYiLwC3Qw4Pc590UE'
+">
+  <!-- =============================================================== -->
+
+  <!-- Fonts (optional; comment out for absolute fastest load) -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* =========================
+       THEME TOKENS
+       ========================= */
+    :root{
+      --bg:#0a0a0f;
+      --bg-2:#0e0e14;
+      --text:#e9e7e1;        /* soft off-white */
+      --muted:#b9b6ad;       /* luxury muted text */
+      --gold:#FFD700;
+      --gold-deep:#b88a00;
+      --gold-soft:#ffe8a3;
+      --velvet:#7b0e1b;      /* deep red velvet */
+      --velvet-dark:#4e0a12; /* darker velvet for shadows */
+      --ok:#38d99e;
+      --warn:#ffb020;
+      --err:#e25555;
+
+      --radius-xl: 22px;
+      --shadow-soft: 0 10px 30px rgba(0,0,0,.35);
+      --shadow-gold: 0 0 32px rgba(255,215,0,.15);
+      --shadow-velvet: 0 8px 28px rgba(123,14,27,.35);
+    }
+
+    /* =========================
+       RESET + BASE
+       ========================= */
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      background: radial-gradient(1200px 900px at 50% -10%, #121218 0%, var(--bg) 55%, #000 100%);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    a { color: inherit; text-decoration: none; }
+    .container {
+      min-height: 100%;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      align-items: center;
+      justify-items: center;
+      padding: 18px;
+    }
+
+    /* =========================
+       CARD WRAPPER
+       ========================= */
+    .card {
+      width: 100%;
+      max-width: 720px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)) padding-box,
+                  linear-gradient(140deg, rgba(255,215,0,.35), rgba(255,255,255,0) 30%, rgba(123,14,27,.35)) border-box;
+      border: 1px solid transparent;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-soft), var(--shadow-gold);
+      padding: clamp(18px, 4vw, 38px);
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .card::after{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(350px 120px at 80% -10%, rgba(255,215,0,.10), transparent 70%),
+                  radial-gradient(220px 90px at 10% 105%, rgba(123,14,27,.18), transparent 70%);
+      z-index:-1;
+      filter: blur(12px);
+    }
+
+    /* =========================
+       HEADER
+       ========================= */
+    .brand {
+      display:flex; align-items:center; gap:10px; margin-bottom:14px; opacity:.95;
+    }
+    .vault-icon {
+      width: 36px; height: 36px; border-radius: 50%;
+      background:
+        radial-gradient(10px 10px at 11px 11px, rgba(255,215,0,.8), transparent 60%),
+        conic-gradient(from 30deg, rgba(255,215,0,.35), rgba(255,215,0,0) 40%, rgba(255,215,0,.25));
+      border:1px solid rgba(255,215,0,.4);
+      box-shadow: inset 0 0 18px rgba(255,215,0,.35), 0 0 16px rgba(255,215,0,.15);
+      position: relative;
+    }
+    .vault-icon::after{
+      content:""; position:absolute; inset:8px;
+      border-radius:50%;
+      border:2px solid rgba(255,215,0,.5);
+      box-shadow: inset 0 0 10px rgba(255,215,0,.3);
+    }
+    .brand-name { font-weight:600; letter-spacing:.2px; font-size:14.5px; color:var(--gold-soft) }
+
+    /* =========================
+       HERO
+       ========================= */
+    .headline {
+      font-family: Cinzel, "Playfair Display", Georgia, "Times New Roman", serif;
+      font-weight: 800;
+      line-height: 1.05;
+      font-size: clamp(32px, 6vw, 56px);
+      margin: 6px 0 10px;
+      letter-spacing: .2px;
+      background: linear-gradient(92deg, var(--gold) 0%, #fff7c9 40%, var(--gold) 80%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: goldShine 3.6s ease-in-out infinite;
+      text-align:center;
+      text-shadow: 0 2px 20px rgba(255,215,0,.05);
+    }
+    @keyframes goldShine{
+      0%,100% { filter: drop-shadow(0 0 0 rgba(255,215,0,.2)); }
+      50%     { filter: drop-shadow(0 0 16px rgba(255,215,0,.32)); }
+    }
+    .sub {
+      text-align:center;
+      color: var(--muted);
+      font-size: clamp(14px, 2.4vw, 17px);
+      margin-bottom: 22px;
+      opacity: 0; transform: translateY(6px);
+      animation: fadeUp .7s ease .35s forwards;
+    }
+    @keyframes fadeUp{
+      to { opacity:1; transform:none; }
+    }
+
+    /* =========================
+       PROGRESS + STATUS
+       ========================= */
+    .progress-wrap {
+      background: linear-gradient(180deg, #0c0c12, #0a0a0f);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: inset 0 0 24px rgba(0,0,0,.35);
+    }
+    .progress-label {
+      display:flex; align-items:center; justify-content:space-between;
+      font-size:13px; color:var(--muted); margin-bottom:10px;
+    }
+    .progress {
+      width: 100%;
+      height: 10px;
+      background: #0a0a0f;
+      border-radius: 999px;
+      border: 1px solid rgba(255,215,0,.22);
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 0 12px rgba(255,215,0,.05);
+    }
+    .bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, rgba(255,215,0,.15), rgba(255,215,0,.45), rgba(255,215,0,.15));
+      position: relative;
+      transition: width .35s ease;
+    }
+    .bar::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent);
+      animation: shimmer 1.2s linear infinite;
+    }
+    @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+
+    .status {
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .status strong { color: var(--gold-soft); font-weight:600; }
+
+    /* =========================
+       ERROR STATE
+       ========================= */
+    .error {
+      display:none;
+      margin-top: 18px;
+      background: linear-gradient(180deg, rgba(123,14,27,.22), rgba(78,10,18,.35));
+      border: 1px solid rgba(255,255,255,.08);
+      border-left: 3px solid var(--velvet);
+      border-radius: 14px;
+      padding: 14px 14px 12px;
+      box-shadow: var(--shadow-velvet);
+      color: #ffe7ea;
+    }
+    .error h3 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing:.2px;
+      color: #ffd6dc;
+    }
+    .error p { margin:0 0 12px; font-size: 14px; color: #ffe7ea; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn {
+      appearance: none; -webkit-appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform .08s ease, box-shadow .2s ease, opacity .2s ease;
+    }
+    .btn:active { transform: translateY(1px) scale(.99); }
+    .btn.retry {
+      background: radial-gradient(120% 220% at 50% 0%, #a11423 0%, var(--velvet) 60%, var(--velvet-dark) 100%);
+      color: #fff5f6;
+      box-shadow: 0 8px 18px rgba(123,14,27,.35), inset 0 -8px 12px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .btn.help {
+      background: transparent;
+      color: var(--gold-soft);
+      border: 1px solid rgba(255,215,0,.25);
+      box-shadow: inset 0 0 12px rgba(255,215,0,.08);
+    }
+    .btn[disabled] { opacity:.6; pointer-events:none; }
+
+    /* =========================
+       FOOTER
+       ========================= */
+    footer {
+      width: 100%;
+      max-width: 720px;
+      margin: 16px auto 4px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      opacity: .9;
+    }
+    footer a { color: var(--gold-soft); text-decoration: underline; text-underline-offset: 3px; }
+
+    /* =========================
+       ACCESSIBILITY ONLY
+       ========================= */
+    .sr-only {
+      position:absolute!important;
+      height:1px;width:1px;
+      overflow:hidden;
+      clip: rect(1px, 1px, 1px, 1px);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <noscript>
+    <div style="max-width:720px;margin:32px auto;padding:16px;border-radius:12px;background:#1a1a22;color:#ffe8e8;border:1px solid #803;">
+      JavaScript is required to finalize your Treasuretto Vault membership. Please enable JavaScript and refresh.
+    </div>
+  </noscript>
+
+  <main class="container">
+    <section class="card" aria-labelledby="welcome-title" aria-describedby="welcome-desc">
+      <div class="brand" aria-hidden="true">
+        <div class="vault-icon" aria-hidden="true"></div>
+        <div class="brand-name">The Treasuretto Vault</div>
+      </div>
+
+      <h1 id="welcome-title" class="headline">Welcome to The Vault</h1>
+      <p id="welcome-desc" class="sub">Finalizing your secure membership…</p>
+
+      <div class="progress-wrap" role="group" aria-label="Membership setup progress">
+        <div class="progress-label" aria-live="polite" aria-atomic="true">
+          <span id="progress-step">Initializing…</span>
+          <span id="progress-percent" aria-hidden="true">0%</span>
+        </div>
+        <div class="progress" aria-hidden="true">
+          <div class="bar" id="progress-bar"></div>
+        </div>
+        <div class="status" role="status" aria-live="polite" aria-atomic="true">
+          <div><strong>Tip:</strong> Please keep this tab open while we secure your profile and generate a checkout.</div>
+        </div>
+      </div>
+
+      <div id="error" class="error" role="alert" aria-live="assertive">
+        <h3>We hit a snag</h3>
+        <p id="error-text">Something went wrong while finalizing your membership. You can try again.</p>
+        <div class="actions">
+          <button class="btn retry" id="retry">Retry</button>
+          <a class="btn help" href="/support" id="help-link">Contact Support</a>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Need help? <a href="/support" rel="nofollow">Contact Support</a>
+    </footer>
+  </main>
+
+  <!-- Supabase ESM import -->
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    /* =========================
+       UTILITIES
+       ========================= */
+    const $ = (sel) => document.querySelector(sel);
+    const bar = $('#progress-bar');
+    const stepEl = $('#progress-step');
+    const pctEl = $('#progress-percent');
+    const statusEl = document.querySelector('.status');
+    const errBox = $('#error');
+    const errText = $('#error-text');
+    const retryBtn = $('#retry');
+
+    const meta = (name) => document.querySelector(`meta[name="${name}"]`)?.content?.trim() || "";
+    const SUPABASE_URL = meta('supabase-url');
+    const SUPABASE_ANON_KEY = meta('supabase-anon-key');
+
+    function setProgress(p, label) {
+      const pct = Math.max(0, Math.min(100, Math.round(p)));
+      bar.style.width = pct + '%';
+      pctEl.textContent = pct + '%';
+      if (label) stepEl.textContent = label;
+    }
+    function pushStatus(line){
+      const div = document.createElement('div');
+      div.textContent = line;
+      statusEl.appendChild(div);
+    }
+    function showError(message) {
+      errText.textContent = message || "Unexpected error.";
+      errBox.style.display = 'block';
+      retryBtn.disabled = false;
+    }
+    function hideError() { errBox.style.display = 'none'; }
+
+    function parseParams() {
+      // Accept both hash (#access_token=...) and query (?access_token=...) just in case
+      const raw = (location.hash?.replace(/^#/, '') || '') + '&' + (location.search?.replace(/^\?/, '') || '');
+      const params = new URLSearchParams(raw);
+      const access_token  = params.get('access_token');
+      const refresh_token = params.get('refresh_token');
+      return { access_token, refresh_token };
+    }
+
+    function stripTokensFromUrl() {
+      try {
+        const url = new URL(window.location.href);
+        url.hash = '';
+        url.searchParams.delete('access_token');
+        url.searchParams.delete('refresh_token');
+        url.searchParams.delete('type');
+        history.replaceState({}, '', url.toString());
+      } catch {}
+    }
+
+    async function postJSON(url, body) {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify(body),
+        credentials: 'same-origin',
+      });
+      if (!r.ok) {
+        const text = await r.text().catch(()=> '');
+        throw new Error(`POST ${url} failed: ${r.status} ${text || r.statusText}`);
+      }
+      return await r.json();
+    }
+
+    /* =========================
+       MAIN FLOW
+       ========================= */
+    let supabase;
+
+    async function run() {
+      hideError();
+      retryBtn.disabled = true;
+      setProgress(3, 'Initializing…');
+
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        showError('Missing Supabase configuration. Please set <meta name="supabase-url"> and <meta name="supabase-anon-key">.');
+        return;
+      }
+
+      supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: true, detectSessionInUrl: false },
+      });
+
+      // 1) Extract tokens and set session (if present)
+      setProgress(12, 'Validating session…');
+      const { access_token, refresh_token } = parseParams();
+
+      try {
+        if (access_token && refresh_token) {
+          const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
+          if (error) throw error;
+          stripTokensFromUrl();
+          pushStatus('✔ Session accepted.');
+        } else {
+          pushStatus('No tokens found in URL — using existing session if available.');
+        }
+      } catch (err) {
+        console.error(err);
+        showError('Could not set your Supabase session. Please retry the link or sign in again.');
+        return;
+      }
+
+      // 2) Get current user
+      setProgress(28, 'Fetching user…');
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userData?.user) {
+        console.error(userErr);
+        showError('We could not validate your login. Please retry the confirmation link or sign in again.');
+        return;
+      }
+      const user = userData.user;
+      pushStatus(`✔ Logged in as ${user.email || 'member'}.`);
+
+      // Pull profile-like fields if present (e.g., from user_metadata)
+      const fullName = user.user_metadata?.full_name || user.user_metadata?.name || '';
+      const market   = user.user_metadata?.market || '';
+
+      // 3) Upsert profile in your DB
+      setProgress(48, 'Securing your profile…');
+      try {
+        await postJSON('/api/upsert-profile', {
+          id: user.id,
+          full_name: fullName,
+          market: market
+        });
+        pushStatus('✔ Profile secured.');
+      } catch (err) {
+        console.error(err);
+        showError('Profile update failed. Please try again.');
+        return;
+      }
+
+      // 4) Create checkout session via your Vercel Serverless API
+      setProgress(72, 'Creating secure checkout…');
+      let checkout;
+      try {
+        checkout = await postJSON('/api/create-checkout', {
+          email: user.email,
+          name: fullName || user.email?.split('@')[0] || 'Member',
+          supabase_user_id: user.id
+        });
+      } catch (err) {
+        console.error(err);
+        showError('Could not create your checkout link. Please try again.');
+        return;
+      }
+
+      const url = checkout?.url;
+      if (!url) {
+        showError('Checkout URL missing. Please contact support.');
+        return;
+      }
+
+      // 5) Redirect
+      setProgress(100, 'Redirecting to encrypted checkout…');
+      pushStatus('✔ Checkout link secured. Redirecting now…');
+      // brief delay for UI polish
+      setTimeout(()=> { window.location.assign(url); }, 450);
+    }
+
+    retryBtn?.addEventListener('click', () => run());
+
+    // Kick off flow
+    run();
+  </script>
+</body>
+</html>
